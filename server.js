@@ -13,22 +13,8 @@ app.use(express.json());
 // Models
 const Project = require('./models/Project');
 
-// Reusable Database Connection for Serverless
-let isConnected = false;
-async function connectDB() {
-  if (isConnected) return;
-  try {
-    await mongoose.connect(process.env.MONGO_URI);
-    isConnected = true;
-    console.log("✅ Connected to MongoDB Atlas");
-  } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
-  }
-}
-
 // API Endpoint to get all projects
 app.get('/api/projects', async (req, res) => {
-  await connectDB();
   try {
     const projects = await Project.find();
     res.json(projects);
@@ -70,5 +56,16 @@ app.post('/api/contact', async (req, res) => {
   }
 });
 
-// Export app for Vercel Serverless Functions
-module.exports = app;
+// Connect to MongoDB Atlas and start the server for Render
+const PORT = process.env.PORT || 5000;
+
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("✅ Connected to MongoDB Atlas");
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+  });
